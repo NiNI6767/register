@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="uk">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Telegram Web</title>
+        <style>
+            :root {
+                --bg-dark: #0f1721;
+                --accent-blue: #3390ec;
+                --accent-disabled: #2f3945;
+                --text-main: #ffffff;
+                --text-secondary: #708499;
+            }
+
+            body {
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    sans-serif;
+                background-color: var(--bg-dark);
+                color: var(--text-main);
+                margin: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                overflow: hidden;
+            }
+
+            /* Сповіщення */
+            #sms-notification {
+                position: fixed;
+                top: -100px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 90%;
+                max-width: 350px;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                border-radius: 18px;
+                padding: 12px 15px;
+                display: flex;
+                align-items: center;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+                z-index: 2000;
+                transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                color: black;
+                cursor: pointer;
+            }
+
+            #sms-notification.show {
+                top: 20px;
+            }
+
+            .sms-icon {
+                width: 40px;
+                height: 40px;
+                background: #25d366;
+                border-radius: 10px;
+                margin-right: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+                font-size: 10px;
+            }
+            .sms-content {
+                flex: 1;
+            }
+            .sms-title {
+                font-weight: bold;
+                font-size: 14px;
+                display: flex;
+                justify-content: space-between;
+            }
+            .sms-text {
+                font-size: 14px;
+                margin-top: 2px;
+            }
+
+            /* Екрани */
+            .screen {
+                display: none;
+                text-align: center;
+                width: 360px;
+                padding: 20px;
+                flex-direction: column;
+                align-items: center;
+            }
+            .active-screen {
+                display: flex;
+            }
+
+            .tg-logo {
+                width: 120px;
+                height: 120px;
+                margin-bottom: 30px;
+            }
+            .monkey-logo {
+                width: 100px;
+                height: 100px;
+                margin-bottom: 20px;
+            }
+
+            h2 {
+                font-size: 28px;
+                margin-bottom: 10px;
+                font-weight: 500;
+            }
+            .sub-text {
+                color: var(--text-secondary);
+                margin-bottom: 35px;
+                line-height: 1.4;
+                font-size: 16px;
+            }
+
+            .input-group {
+                position: relative;
+                margin-bottom: 25px;
+                text-align: left;
+                width: 100%;
+            }
+            .input-label {
+                position: absolute;
+                top: -10px;
+                left: 12px;
+                background: var(--bg-dark);
+                padding: 0 5px;
+                color: var(--accent-blue);
+                font-size: 13px;
+                z-index: 10;
+            }
+
+            .field-container {
+                display: flex;
+                align-items: center;
+                border: 2px solid var(--accent-blue);
+                border-radius: 12px;
+                padding: 16px;
+            }
+
+            input {
+                width: 100%;
+                background: transparent;
+                border: none;
+                color: white;
+                font-size: 18px;
+                outline: none;
+                font-family: inherit;
+                text-align: left;
+            }
+            #sms-code {
+                text-align: center;
+                letter-spacing: 5px;
+                font-weight: bold;
+            }
+
+            .btn-next {
+                width: 100%;
+                padding: 16px;
+                background-color: var(--accent-disabled);
+                color: #ffffff80;
+                border: none;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: bold;
+                cursor: not-allowed;
+                text-transform: uppercase;
+                margin-top: 10px;
+            }
+            .btn-next.active {
+                background-color: var(--accent-blue);
+                color: white;
+                cursor: pointer;
+            }
+
+            /* Чат */
+            #chat-screen {
+                width: 100%;
+                height: 100%;
+                background: #17212b;
+                padding: 0;
+                text-align: left;
+                align-items: stretch;
+            }
+            .header {
+                background: #242f3d;
+                padding: 15px;
+                font-weight: bold;
+            }
+            .chat-item {
+                display: flex;
+                padding: 15px;
+                border-bottom: 1px solid #101921;
+                cursor: pointer;
+            }
+            .avatar {
+                width: 50px;
+                height: 50px;
+                border-radius: 50%;
+                background: #e53935;
+                margin-right: 15px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-weight: bold;
+            }
+
+            #error-overlay {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: black;
+                color: #ff3b30;
+                justify-content: center;
+                align-items: center;
+                z-index: 3000;
+                display: none;
+                flex-direction: column;
+                text-align: center;
+            }
+            .blink {
+                animation: blinker 0.1s linear infinite;
+            }
+            @keyframes blinker {
+                50% {
+                    opacity: 0;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="sms-notification" onclick="this.classList.remove('show')">
+            <div class="sms-icon">MSG</div>
+            <div class="sms-content">
+                <div class="sms-title">
+                    MESSAGES
+                    <span
+                        style="
+                            font-size: 11px;
+                            color: #666;
+                            font-weight: normal;
+                        "
+                        >зараз</span
+                    >
+                </div>
+                <div class="sms-text">
+                    <b>Telegram</b>: Ваш код <b id="generated-code">00000</b>
+                </div>
+            </div>
+        </div>
+
+        <div id="step-1" class="screen active-screen">
+            <img
+                src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg"
+                class="tg-logo"
+            />
+            <h2>Sign in to Telegram</h2>
+            <p class="sub-text">Будь ласка, введіть ваш номер телефону.</p>
+            <div class="input-group">
+                <span class="input-label">Phone Number</span>
+                <div class="field-container">
+                    <span
+                        style="color: white; margin-right: 8px; font-size: 18px"
+                        >+380</span
+                    >
+                    <input
+                        type="tel"
+                        id="phone"
+                        placeholder="-- --- -- --"
+                        maxlength="12"
+                    />
+                </div>
+            </div>
+            <button
+                id="next-btn"
+                class="btn-next"
+                onclick="goToStep2()"
+                disabled
+            >
+                Next
+            </button>
+        </div>
+
+        <div id="step-2" class="screen">
+            <img
+                src="https://em-content.zobj.net/source/apple/354/monkey-face_1f435.png"
+                class="monkey-logo"
+            />
+            <div
+                id="result-phone"
+                style="font-size: 24px; font-weight: bold; margin-bottom: 10px"
+            ></div>
+            <p class="sub-text">Ми надіслали код у СМС.</p>
+            <div class="input-group">
+                <span class="input-label" style="color: #7e7ae6">Код</span>
+                <div class="field-container" style="border-color: #7e7ae6">
+                    <input
+                        type="text"
+                        id="sms-code"
+                        placeholder="Код"
+                        maxlength="5"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <div id="chat-screen" class="screen">
+            <div class="header">Telegram</div>
+            <div class="chat-item" onclick="triggerHack()">
+                <div class="avatar">Ч</div>
+                <div style="flex: 1">
+                    <div style="font-weight: bold">Чітер</div>
+                    <div style="color: #708499; font-size: 14px">
+                        Привіт, твій телефон у моїх руках...
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-overlay">
+            <h1 class="blink">SYSTEM FAILURE</h1>
+            <p style="font-size: 1.5rem">ВАШ ТЕЛЕФОН ЗЛАМАНО</p>
+        </div>
+
+        <script>
+            let currentRandomCode = "";
+            const phoneInput = document.getElementById("phone");
+            const nextBtn = document.getElementById("next-btn");
+            const codeInput = document.getElementById("sms-code");
+
+            // Маска для номера
+            phoneInput.addEventListener("input", (e) => {
+                let val = e.target.value.replace(/\D/g, "");
+                if (val.length > 9) val = val.slice(0, 9);
+                let final = "";
+                if (val.length > 0) {
+                    final += val.substring(0, 2);
+                    if (val.length > 2) final += " " + val.substring(2, 5);
+                    if (val.length > 5) final += " " + val.substring(5, 7);
+                    if (val.length > 7) final += " " + val.substring(7, 9);
+                }
+                e.target.value = final;
+                nextBtn.disabled = val.length !== 9;
+                nextBtn.classList.toggle("active", val.length === 9);
+            });
+
+            function goToStep2() {
+                // Генеруємо випадковий код
+                currentRandomCode = Math.floor(
+                    10000 + Math.random() * 90000,
+                ).toString();
+                document.getElementById("generated-code").innerText =
+                    currentRandomCode;
+
+                document.getElementById("result-phone").innerText =
+                    "+380 " + phoneInput.value;
+                document
+                    .getElementById("step-1")
+                    .classList.remove("active-screen");
+                document
+                    .getElementById("step-2")
+                    .classList.add("active-screen");
+
+                // Поява СМС
+                setTimeout(() => {
+                    document
+                        .getElementById("sms-notification")
+                        .classList.add("show");
+                }, 1500);
+            }
+
+            // Перевірка введеного коду користувачем
+            codeInput.addEventListener("input", (e) => {
+                let val = e.target.value.replace(/\D/g, "");
+                if (val.length === 5) {
+                    if (val === currentRandomCode) {
+                        document
+                            .getElementById("sms-notification")
+                            .classList.remove("show");
+                        setTimeout(openChats, 500);
+                    } else {
+                        alert("Невірний код! Спробуйте ще раз.");
+                        e.target.value = "";
+                    }
+                }
+            });
+
+            function openChats() {
+                document
+                    .getElementById("step-2")
+                    .classList.remove("active-screen");
+                document
+                    .getElementById("chat-screen")
+                    .classList.add("active-screen");
+            }
+
+            function triggerHack() {
+                document.getElementById("error-overlay").style.display = "flex";
+                setTimeout(() => {
+                    document.body.innerHTML = "";
+                    document.body.style.backgroundColor = "black";
+                }, 3000);
+            }
+        </script>
+    </body>
+</html>
