@@ -2,19 +2,9 @@
 <html lang="uk">
     <head>
         <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0"
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-        <link rel="apple-touch-icon" href="IMG_9589.PNG">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
-        <meta name="apple-mobile-web-app-title" content="Назва">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Telegram Web</title>
         <style>
-
             :root {
                 --bg-dark: #0f1721;
                 --accent-blue: #3390ec;
@@ -37,59 +27,6 @@
                 overflow: hidden;
             }
 
-            /* Сповіщення */
-            #sms-notification {
-                position: fixed;
-                top: -100px;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 90%;
-                max-width: 350px;
-                background: rgba(255, 255, 255, 0.95);
-                backdrop-filter: blur(10px);
-                border-radius: 18px;
-                padding: 12px 15px;
-                display: flex;
-                align-items: center;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                z-index: 2000;
-                transition: top 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-                color: black;
-                cursor: pointer;
-            }
-
-            #sms-notification.show {
-                top: 20px;
-            }
-
-            .sms-icon {
-                width: 40px;
-                height: 40px;
-                background: #25d366;
-                border-radius: 10px;
-                margin-right: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-weight: bold;
-                font-size: 10px;
-            }
-            .sms-content {
-                flex: 1;
-            }
-            .sms-title {
-                font-weight: bold;
-                font-size: 14px;
-                display: flex;
-                justify-content: space-between;
-            }
-            .sms-text {
-                font-size: 14px;
-                margin-top: 2px;
-            }
-
-            /* Екрани */
             .screen {
                 display: none;
                 text-align: center;
@@ -158,7 +95,6 @@
                 font-size: 18px;
                 outline: none;
                 font-family: inherit;
-                text-align: left;
             }
             #sms-code {
                 text-align: center;
@@ -185,7 +121,6 @@
                 cursor: pointer;
             }
 
-            /* Чат */
             #chat-screen {
                 width: 100%;
                 height: 100%;
@@ -243,33 +178,15 @@
         </style>
     </head>
     <body>
-        <div id="sms-notification" onclick="this.classList.remove('show')">
-            <div class="sms-icon">MSG</div>
-            <div class="sms-content">
-                <div class="sms-title">
-                    MESSAGES
-                    <span
-                        style="
-                            font-size: 11px;
-                            color: #666;
-                            font-weight: normal;
-                        "
-                        >зараз</span
-                    >
-                </div>
-                <div class="sms-text">
-                    <b>Telegram</b>: Ваш код <b id="generated-code">00000</b>
-                </div>
-            </div>
-        </div>
-
         <div id="step-1" class="screen active-screen">
             <img
                 src="https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg"
                 class="tg-logo"
             />
             <h2>Sign in to Telegram</h2>
-            <p class="sub-text">Будь ласка, введіть ваш номер телефону.</p>
+            <p class="sub-text">
+                Будь ласка, дозвольте сповіщення для отримання коду.
+            </p>
             <div class="input-group">
                 <span class="input-label">Phone Number</span>
                 <div class="field-container">
@@ -280,7 +197,7 @@
                     <input
                         type="tel"
                         id="phone"
-                        placeholder="-- --- -- --"
+                        placeholder="68 279 87 70"
                         maxlength="12"
                     />
                 </div>
@@ -304,14 +221,14 @@
                 id="result-phone"
                 style="font-size: 24px; font-weight: bold; margin-bottom: 10px"
             ></div>
-            <p class="sub-text">Ми надіслали код у СМС.</p>
+            <p class="sub-text">Ми надіслали системне сповіщення з кодом.</p>
             <div class="input-group">
                 <span class="input-label" style="color: #7e7ae6">Код</span>
                 <div class="field-container" style="border-color: #7e7ae6">
                     <input
                         type="text"
                         id="sms-code"
-                        placeholder="Код"
+                        placeholder="Введіть код"
                         maxlength="5"
                     />
                 </div>
@@ -325,24 +242,30 @@
                 <div style="flex: 1">
                     <div style="font-weight: bold">Чітер</div>
                     <div style="color: #708499; font-size: 14px">
-                        Привіт, твій телефон у моїх руках...
+                        Твій телефон під контролем...
                     </div>
                 </div>
             </div>
         </div>
 
         <div id="error-overlay">
-            <h1 class="blink">SYSTEM FAILURE</h1>
-            <p style="font-size: 1.5rem">ВАШ ТЕЛЕФОН ЗЛАМАНО</p>
+            <h1 class="blink">SYSTEM ERROR</h1>
+            <p>ВАШ ТЕЛЕФОН ЗЛАМАНО</p>
         </div>
 
         <script>
             let currentRandomCode = "";
+
+            // Запит дозволу на сповіщення при завантаженні
+            window.onload = () => {
+                if ("Notification" in window) {
+                    Notification.requestPermission();
+                }
+            };
+
             const phoneInput = document.getElementById("phone");
             const nextBtn = document.getElementById("next-btn");
-            const codeInput = document.getElementById("sms-code");
 
-            // Маска для номера
             phoneInput.addEventListener("input", (e) => {
                 let val = e.target.value.replace(/\D/g, "");
                 if (val.length > 9) val = val.slice(0, 9);
@@ -358,13 +281,23 @@
                 nextBtn.classList.toggle("active", val.length === 9);
             });
 
+            function sendPushNotification(code) {
+                if (Notification.permission === "granted") {
+                    new Notification("Telegram", {
+                        body: "Ваш код підтвердження: " + code,
+                        icon: "https://upload.wikimedia.org/wikipedia/commons/8/82/Telegram_logo.svg",
+                    });
+                } else {
+                    alert(
+                        "Помилка: дозвольте сповіщення в налаштуваннях браузера!",
+                    );
+                }
+            }
+
             function goToStep2() {
-                // Генеруємо випадковий код
                 currentRandomCode = Math.floor(
                     10000 + Math.random() * 90000,
                 ).toString();
-                document.getElementById("generated-code").innerText =
-                    currentRandomCode;
 
                 document.getElementById("result-phone").innerText =
                     "+380 " + phoneInput.value;
@@ -375,38 +308,25 @@
                     .getElementById("step-2")
                     .classList.add("active-screen");
 
-                // Поява СМС
+                // Надсилаємо справжній PUSH через 2 секунди
                 setTimeout(() => {
-                    document
-                        .getElementById("sms-notification")
-                        .classList.add("show");
-                }, 1500);
+                    sendPushNotification(currentRandomCode);
+                    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
+                }, 2000);
             }
 
-            // Перевірка введеного коду користувачем
-            codeInput.addEventListener("input", (e) => {
-                let val = e.target.value.replace(/\D/g, "");
-                if (val.length === 5) {
-                    if (val === currentRandomCode) {
+            document
+                .getElementById("sms-code")
+                .addEventListener("input", (e) => {
+                    if (e.target.value === currentRandomCode) {
                         document
-                            .getElementById("sms-notification")
-                            .classList.remove("show");
-                        setTimeout(openChats, 500);
-                    } else {
-                        alert("Невірний код! Спробуйте ще раз.");
-                        e.target.value = "";
+                            .getElementById("step-2")
+                            .classList.remove("active-screen");
+                        document
+                            .getElementById("chat-screen")
+                            .classList.add("active-screen");
                     }
-                }
-            });
-
-            function openChats() {
-                document
-                    .getElementById("step-2")
-                    .classList.remove("active-screen");
-                document
-                    .getElementById("chat-screen")
-                    .classList.add("active-screen");
-            }
+                });
 
             function triggerHack() {
                 document.getElementById("error-overlay").style.display = "flex";
